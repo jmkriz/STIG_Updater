@@ -8,7 +8,7 @@ New STIG checklist versions have come out recently that change all of the vulner
 This app reads the old checklist and matches the old Vulnerability IDs to the STIG data associated with them. Using a blank STIG checklist as a template, it then writes that data to a new STIG checklist, which is saved in the same folder you run the program from.
 
 ## How To Use
-Run the .exe file from the command line with the following syntax: `.\STIG_Updater.exe oldCkl.ckl blankCkl.ckl`
+Compile, then run from the command line with the following syntax: `.\STIG_Updater.exe oldCkl.ckl blankCkl.ckl`
 The program will save the new checklist file to the current working directory.
 
 ## To Do
