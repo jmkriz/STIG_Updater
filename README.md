@@ -13,4 +13,3 @@ The program will save the new checklist file to the location specified by newLis
 
 ## To Do
 * Implement the transfer of asset information (host name, etc.) from the old checklist to the new checklist.
-* Test for (and implement, if necessary) support of Unicode characters and the "<" and ">" characters, as well as tags like `<STATUS>` and `</VULN>` which my program looks for to find its place in the file.
