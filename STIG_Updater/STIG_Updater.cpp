@@ -6,9 +6,22 @@
 #include <string>
 #include <filesystem>
 
+namespace fs = std::filesystem;
+
 bool isCKL(char* filePath) {
     std::string fileExt{ strrchr(filePath, '.') };
-    return fileExt == ".ckl" || fileExt == ".CKL";
+    return ( fileExt == ".ckl" || fileExt == ".CKL" );
+}
+
+bool okayToOverwrite(std::string filePath) {
+    if (fs::exists(filePath)) {
+        std::cout << filePath << " will be overwritten! Is this okay? [yes/no] ";
+        std::string response;
+        std::cin >> response;
+        std::transform(response.begin(), response.end(), response.begin(), ::tolower);
+        return (response == "yes" || response == "y");
+    }
+    else return true;
 }
 
 std::map<std::string, std::string> mapVulnIDs(std::ifstream& file) {
@@ -53,7 +66,7 @@ std::string genNewCKLStr(std::ifstream& file, std::map<std::string, std::string>
     while (file.peek() != EOF) {
         std::getline(file, line, '<');
         newCKLStr += line + '<';
-        // For each LEGACY_ID, see if it is in vulnMap and save it in vulnKey if it is
+        // For each LEGACY_ID, move ahead and see if it is in vulnMap, then save it in vulnKey if it is
         if (line == "LEGACY_ID") {
             std::getline(file, line, '>');
             newCKLStr += line + '>';
@@ -86,8 +99,8 @@ std::string genNewCKLStr(std::ifstream& file, std::map<std::string, std::string>
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 3 || !isCKL(argv[1]) || !isCKL(argv[2])) {
-        std::cerr << "Usage: STIG_Updater.exe oldList.ckl emptyList.ckl" << std::endl;
+    if (argc < 3 || argc > 4 || !isCKL(argv[1]) || !isCKL(argv[2])) {
+        std::cerr << "Usage: STIG_Updater.exe oldList.ckl emptyList.ckl [newList.ckl]";
         return 1;
     }
 
@@ -95,19 +108,38 @@ int main(int argc, char* argv[]) {
     std::ifstream emptyCKL{ argv[2] };
 
     if (!oldCKL) {
-        std::cerr << "Error: Could not open " << argv[1] << std::endl;
+        std::cerr << "Error: Could not open " << argv[1];
         return 1;
     }
 
     if (!emptyCKL) {
-        std::cerr << "Error: Could not open " << argv[2] << std::endl;
+        std::cerr << "Error: Could not open " << argv[2];
         return 1;
     }
 
-    std::map<std::string, std::string> vulnMap = mapVulnIDs(oldCKL);
+    std::string outCKLName;
+    if (argc > 3) {
+        outCKLName = argv[3];
+    }
+    else {
+        outCKLName = "out.ckl";
+    }
 
-    std::ofstream newCKL{ std::string{ "out.ckl" } };
-    newCKL << genNewCKLStr(emptyCKL, vulnMap);
+    if (okayToOverwrite(outCKLName)) {
+        std::map<std::string, std::string> vulnMap = mapVulnIDs(oldCKL);
 
-    std::cout << "New checklist created successfully in the current working directory as \"out.ckl\"";
+        std::string outCKLStr{ genNewCKLStr(emptyCKL, vulnMap) };
+
+        oldCKL.close();
+        emptyCKL.close();
+
+        std::ofstream outCKL{ outCKLName };
+        if (!outCKL) {
+            std::cerr << "Error: Could not open " << outCKLName;
+            return 1;
+        }
+        outCKL << outCKLStr;
+
+        std::cout << "New checklist created successfully as " + outCKLName;
+    }
 }
